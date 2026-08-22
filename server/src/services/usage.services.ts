@@ -7,6 +7,8 @@ import {
     findUserTotalPodcasts,
     incrementUserArtifactCount as incrementUserArtifactCountRepo,
     incrementUserPodcastCount as incrementUserPodcastCountRepo,
+    consumeFreePodcastInterruption,
+    findUserPodcastInterruptionCount,
 } from "../repository/user.repository.js";
 import { ForbiddenError } from "../types/app-error.js";
 import type { PlanType } from "../generated/prisma/client.js";
@@ -19,6 +21,7 @@ export const PLAN_LIMITS: Record<
         SOURCES: number;
         ARTIFACTS: number;
         PODCASTS: number | null;
+        INTERRUPTIONS: number | null;
     }
 > = {
     FREE: {
@@ -27,6 +30,7 @@ export const PLAN_LIMITS: Record<
         SOURCES: 3,
         ARTIFACTS: 3,
         PODCASTS: 2, // Lifetime audio podcast generations for free users
+        INTERRUPTIONS: 3, // Lifetime Interrupt & Ask requests for free users
     },
     PRO: {
         WORKSPACES: 3,
@@ -34,6 +38,7 @@ export const PLAN_LIMITS: Record<
         SOURCES: 15,
         ARTIFACTS: 10,
         PODCASTS: null, // Unlimited podcasts
+        INTERRUPTIONS: null,
     },
     PRO_PLUS: {
         WORKSPACES: 10,
@@ -41,6 +46,7 @@ export const PLAN_LIMITS: Record<
         SOURCES: 30,
         ARTIFACTS: 25,
         PODCASTS: null, // Unlimited podcasts
+        INTERRUPTIONS: null,
     },
 };
 
@@ -50,7 +56,8 @@ export interface LimitDetails {
         | "artifacts"
         | "sources"
         | "messages"
-        | "podcasts";
+        | "podcasts"
+        | "interruptions";
     current: number;
     max: number | null;
     plan: PlanType;
@@ -79,13 +86,14 @@ export async function getUserUsage(userId: string) {
     const { plan, isPro, isProPlus, planExpiresAt, limits } =
         await getUserPlan(userId);
 
-    const [workspaceCount, sourceCount, userArtifacts, userPodcasts, messageCount] =
+    const [workspaceCount, sourceCount, userArtifacts, userPodcasts, messageCount, userInterruptions] =
         await Promise.all([
             countUserWorkspaces(userId),
             countUserSources(userId),
             findUserTotalArtifacts(userId),
             findUserTotalPodcasts(userId),
             countUserMessages(userId),
+            findUserPodcastInterruptionCount(userId),
         ]);
 
     const totalArtifactsCreated = userArtifacts?.totalArtifactsCreated ?? 0;
@@ -123,6 +131,13 @@ export async function getUserUsage(userId: string) {
             limit: limits.MESSAGES,
             exceeded:
                 limits.MESSAGES !== null && messageCount >= limits.MESSAGES,
+        },
+        interruptions: {
+            count: userInterruptions?.totalPodcastInterruptions ?? 0,
+            limit: limits.INTERRUPTIONS,
+            exceeded:
+                limits.INTERRUPTIONS !== null &&
+                (userInterruptions?.totalPodcastInterruptions ?? 0) >= limits.INTERRUPTIONS,
         },
     };
 }
@@ -245,4 +260,29 @@ export async function assertCanSendMessage(userId: string): Promise<void> {
             } satisfies LimitDetails & { code: string },
         );
     }
+}
+
+/** Consumes one free Interrupt & Ask use. Paid plans remain unlimited. */
+export async function assertCanUsePodcastInterruption(userId: string): Promise<void> {
+    const { plan, limits } = await getUserPlan(userId);
+    const limit = limits.INTERRUPTIONS;
+
+    if (limit === null) return;
+
+    // Conditional update prevents concurrent requests from exceeding the limit.
+    const result = await consumeFreePodcastInterruption(userId, limit);
+    if (result.count > 0) return;
+
+    const usage = await findUserPodcastInterruptionCount(userId);
+    const current = usage?.totalPodcastInterruptions ?? limit;
+    throw new ForbiddenError(
+        `Free plan limit reached: You have used all ${limit} Interrupt & Ask requests. Upgrade to Pro for unlimited live host questions.`,
+        {
+            code: "LIMIT_REACHED",
+            limitType: "interruptions",
+            current,
+            max: limit,
+            plan,
+        } satisfies LimitDetails & { code: string },
+    );
 }

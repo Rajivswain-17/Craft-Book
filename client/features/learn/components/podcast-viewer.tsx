@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { apiClient } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
+import { useUsage, useUpgradeModal } from "@/features/billing";
 
 interface PodcastViewerProps {
   content?: { podcast?: PodcastContent } | null;
@@ -136,10 +137,16 @@ export function PodcastViewer({
 
   const turns = podcast?.transcript || [];
   const rawMainAudioUrl = podcast?.audioUrl;
+  const hasMainAudio = Boolean(rawMainAudioUrl || podcast?.audioBase64);
+  const { usage, refetch: refetchUsage } = useUsage();
+  const { openUpgradeModal } = useUpgradeModal();
 
   const resolvedMainAudioUrl = useMemo(
-    () => resolvePodcastAudioUrl(rawMainAudioUrl, workspaceId, artifactId),
-    [rawMainAudioUrl, workspaceId, artifactId]
+    () =>
+      hasMainAudio
+        ? resolvePodcastAudioUrl(rawMainAudioUrl, workspaceId, artifactId)
+        : undefined,
+    [rawMainAudioUrl, workspaceId, artifactId, hasMainAudio]
   );
 
   const resolvedActiveInterruptionUrl = useMemo(
@@ -310,6 +317,7 @@ export function PodcastViewer({
       );
 
       setCreatedInterruptions((previous) => [...previous, interruption]);
+      void refetchUsage();
       setUserQuestion("");
       setIsInterruptModalOpen(false);
 
@@ -336,6 +344,10 @@ export function PodcastViewer({
           ? err.message
           : "Failed to generate host response. Please try again.";
       setInterruptError(msg);
+      if (msg.toLowerCase().includes("interrupt & ask requests")) {
+        setIsInterruptModalOpen(false);
+        openUpgradeModal({ reason: msg });
+      }
     } finally {
       setIsSubmittingInterrupt(false);
     }
@@ -431,6 +443,12 @@ export function PodcastViewer({
               </Button>
             )}
 
+            {usage?.plan === "FREE" && usage.interruptions.limit !== null && (
+              <span className="text-[11px] text-muted-foreground whitespace-nowrap">
+                {Math.max(0, usage.interruptions.limit - usage.interruptions.count)} free asks left
+              </span>
+            )}
+
             <Button
               variant="outline"
               size="xs"
@@ -477,6 +495,12 @@ export function PodcastViewer({
             >
               <X className="w-3.5 h-3.5" />
             </button>
+          </div>
+        )}
+
+        {!hasMainAudio && podcast.audioError && (
+          <div className="p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-xs">
+            {podcast.audioError}
           </div>
         )}
 

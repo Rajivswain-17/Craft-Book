@@ -243,6 +243,7 @@ Source material:\n\n${sourceText}`,
             // Generate multi-speaker audio with ElevenLabs
             let audioUrl: string | null = null;
             let audioBase64: string | null = null;
+            let audioError: string | null = null;
             try {
                 const mp3Buffer = await generateMultiSpeakerPodcastAudio(
                     debateData.turns,
@@ -273,6 +274,7 @@ Source material:\n\n${sourceText}`,
                 }
             } catch (audioErr) {
                 console.error("Audio synthesis failed:", audioErr);
+                audioError = "Podcast audio could not be generated. Check the ElevenLabs API key, account credits, and server logs, then regenerate this podcast.";
             }
 
             return {
@@ -282,6 +284,7 @@ Source material:\n\n${sourceText}`,
                     durationEstimate: "1 min",
                     audioUrl,
                     audioBase64: audioBase64 || undefined,
+                    audioError,
                     transcript: debateData.turns,
                 },
             };

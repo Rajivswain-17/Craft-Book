@@ -12,6 +12,7 @@ export function findUserPlanDetails(userId: string) {
             planExpiresAt: true,
             totalArtifactsCreated: true,
             totalPodcastsCreated: true,
+            totalPodcastInterruptions: true,
         },
     });
 }
@@ -28,6 +29,7 @@ export function findUserById(userId: string) {
             planExpiresAt: true,
             totalArtifactsCreated: true,
             totalPodcastsCreated: true,
+            totalPodcastInterruptions: true,
             createdAt: true,
             updatedAt: true,
         },
@@ -67,6 +69,23 @@ export function incrementUserPodcastCount(userId: string) {
         where: { id: userId },
         data: { totalPodcastsCreated: { increment: 1 } },
         select: { totalPodcastsCreated: true },
+    });
+}
+
+export function consumeFreePodcastInterruption(userId: string, limit: number) {
+    return prisma.user.updateMany({
+        where: {
+            id: userId,
+            totalPodcastInterruptions: { lt: limit },
+        },
+        data: { totalPodcastInterruptions: { increment: 1 } },
+    });
+}
+
+export function findUserPodcastInterruptionCount(userId: string) {
+    return prisma.user.findUnique({
+        where: { id: userId },
+        select: { totalPodcastInterruptions: true },
     });
 }
 

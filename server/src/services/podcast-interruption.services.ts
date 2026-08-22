@@ -14,8 +14,8 @@ import {
     savePodcastAudioLocally,
 } from "../lib/elevenlabs.js";
 import { uploadAudioToCloudinary } from "../lib/cloudinary.js";
-import { NotFoundError, ValidationError, ForbiddenError } from "../types/app-error.js";
-import { getUserPlan } from "./usage.services.js";
+import { NotFoundError, ValidationError } from "../types/app-error.js";
+import { assertCanUsePodcastInterruption } from "./usage.services.js";
 
 
 
@@ -68,14 +68,9 @@ export async function processPodcastInterruption({
         throw new ValidationError("Please provide a question to ask the hosts.");
     }
 
-    // 1. Verify workspace access & Pro subscription tier
+    // 1. Verify workspace access and consume a free-tier use when applicable.
     await getWorkspaceByIdForUser(workspaceId, userId);
-    const { isPro } = await getUserPlan(userId);
-    if (!isPro) {
-        throw new ForbiddenError(
-            "Podcast interruptions are exclusive to Pro and Pro+ members. Upgrade to unlock interactive AI co-host discussions.",
-        );
-    }
+    await assertCanUsePodcastInterruption(userId);
 
     // 2. Fetch artifact and verify ownership & type
     const artifact = await findArtifactByIdAndWorkspaceId(

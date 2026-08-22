@@ -16,6 +16,7 @@ export interface UserUsage {
   artifacts: UsageMetric;
   podcasts: UsageMetric;
   messages: UsageMetric;
+  interruptions: UsageMetric;
 }
 
 export interface RazorpayOrderResponse {

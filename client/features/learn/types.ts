@@ -56,6 +56,8 @@ export interface InterruptionItem {
 
 export interface PodcastContent {
   audioUrl?: string | null;
+  audioBase64?: string;
+  audioError?: string | null;
   topic?: string;
   summary?: string;
   durationEstimate?: string;

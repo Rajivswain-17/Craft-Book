@@ -55,6 +55,7 @@ const PLANS: PlanConfig[] = [
       { text: "3 Sources Upload" },
       { text: "3 Learning Artifacts" },
       { text: "2 Audio Debate Podcasts" },
+      { text: "3 Interrupt & Ask questions" },
     ],
   },
   {
@@ -70,6 +71,7 @@ const PLANS: PlanConfig[] = [
       { text: "15 Sources Upload", highlight: true },
       { text: "10 Learning Artifacts", highlight: true },
       { text: "Unlimited Audio Podcasts", highlight: true },
+      { text: "Unlimited Interrupt & Ask questions", highlight: true },
     ],
   },
   {
@@ -84,6 +86,7 @@ const PLANS: PlanConfig[] = [
       { text: "30 Sources Upload", highlight: true },
       { text: "25 Learning Artifacts", highlight: true },
       { text: "Unlimited Audio Podcasts", highlight: true },
+      { text: "Unlimited Interrupt & Ask questions", highlight: true },
     ],
   },
 ];
