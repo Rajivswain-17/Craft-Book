@@ -11,6 +11,7 @@ export function findUserPlanDetails(userId: string) {
             plan: true,
             planExpiresAt: true,
             totalArtifactsCreated: true,
+            totalPodcastsCreated: true,
         },
     });
 }
@@ -26,6 +27,7 @@ export function findUserById(userId: string) {
             plan: true,
             planExpiresAt: true,
             totalArtifactsCreated: true,
+            totalPodcastsCreated: true,
             createdAt: true,
             updatedAt: true,
         },
@@ -50,6 +52,21 @@ export function incrementUserArtifactCount(userId: string) {
         where: { id: userId },
         data: { totalArtifactsCreated: { increment: 1 } },
         select: { totalArtifactsCreated: true },
+    });
+}
+
+export function findUserTotalPodcasts(userId: string) {
+    return prisma.user.findUnique({
+        where: { id: userId },
+        select: { totalPodcastsCreated: true },
+    });
+}
+
+export function incrementUserPodcastCount(userId: string) {
+    return prisma.user.update({
+        where: { id: userId },
+        data: { totalPodcastsCreated: { increment: 1 } },
+        select: { totalPodcastsCreated: true },
     });
 }
 

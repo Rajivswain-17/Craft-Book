@@ -121,18 +121,48 @@ export function StudioPanel({
   isCreating,
   selectedSourcesCount,
 }: StudioPanelProps) {
-  const { isPro } = useUsage();
+  const { isPro, usage } = useUsage();
   const [selectedArtifact, setSelectedArtifact] = useState<LearningArtifact | null>(null);
   const [generatingType, setGeneratingType] = useState<ArtifactType | null>(null);
   const [hoveredTool, setHoveredTool] = useState<ArtifactType | null>(null);
 
+  // Free users get a limited number of lifetime podcast generations
+  const podcastLimitReached = !isPro && Boolean(usage?.podcasts.exceeded);
+
+  const renderPodcastBadge = () => {
+    if (!usage || usage.podcasts.limit === null) {
+      return (
+        <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-sm bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 flex items-center gap-0.5">
+          <Crown className="w-2.5 h-2.5" /> PRO
+        </span>
+      );
+    }
+
+    const remaining = Math.max(
+      0,
+      usage.podcasts.limit - usage.podcasts.count
+    );
+
+    return (
+      <span
+        className={`text-[9px] font-bold px-1.5 py-0.2 rounded-sm border flex items-center gap-0.5 ${
+          remaining > 0
+            ? "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30"
+            : "bg-destructive/15 text-destructive border-destructive/30"
+        }`}
+      >
+        {remaining > 0 ? `${remaining} LEFT` : "LIMIT"}
+      </span>
+    );
+  };
+
   const handleCreate = async (type: ArtifactType) => {
-    // If podcast is clicked by free user, prompt upgrade modal immediately
-    if (type === "PODCAST" && !isPro) {
+    // If free user exhausted their podcast quota, prompt upgrade modal immediately
+    if (type === "PODCAST" && podcastLimitReached) {
       useUpgradeModal.getState().openUpgradeModal({
         reason:
-          "Audio Debate Podcast is an exclusive feature for Pro and Pro+ members. Upgrade your plan to generate AI voice podcasts.",
-        limitType: "artifacts",
+          "Free plan limit reached: You have used all of your free Audio Debate Podcasts. Deleting podcasts does not restore your quota. Upgrade to Pro for unlimited podcasts.",
+        limitType: "podcasts",
       });
       return;
     }
@@ -209,7 +239,8 @@ export function StudioPanel({
           <div className="grid grid-cols-2 gap-2">
             {STUDIO_TOOLS.map((tool) => {
               const isThisGenerating = generatingType === tool.type;
-              const isPodcastProLocked = tool.type === "PODCAST" && !isPro;
+              const isPodcastQuotaOver =
+                tool.type === "PODCAST" && podcastLimitReached;
 
               const cardContent = (
                 <div className="p-3 flex flex-col justify-between h-full w-full">
@@ -221,11 +252,7 @@ export function StudioPanel({
                         tool.renderIcon(hoveredTool === tool.type)
                       )}
                     </div>
-                    {tool.type === "PODCAST" && (
-                      <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-sm bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 flex items-center gap-0.5">
-                        <Crown className="w-2.5 h-2.5" /> PRO
-                      </span>
-                    )}
+                    {tool.type === "PODCAST" && renderPodcastBadge()}
                   </div>
                   <div>
                     <span className="text-xs font-medium text-foreground block truncate">
@@ -259,17 +286,17 @@ export function StudioPanel({
                   onClick={() => handleCreate(tool.type)}
                   onMouseEnter={() => setHoveredTool(tool.type)}
                   onMouseLeave={() => setHoveredTool(null)}
-                  disabled={!isPodcastProLocked && (isCreating || selectedSourcesCount === 0)}
+                  disabled={!isPodcastQuotaOver && (isCreating || selectedSourcesCount === 0)}
                   title={
-                    isPodcastProLocked
-                      ? "Audio Debate Podcast is exclusive to Pro and Pro+ members"
+                    isPodcastQuotaOver
+                      ? "Free podcast limit reached — upgrade to Pro for unlimited Audio Debate Podcasts"
                       : selectedSourcesCount === 0
                       ? "Please select at least one source in the sources panel to generate artifacts"
                       : `Generate ${tool.title}`
                   }
                   className={cn(
                     "p-3 rounded-xl border text-left transition-all flex flex-col justify-between group min-h-[92px]",
-                    !isPodcastProLocked && selectedSourcesCount === 0
+                    !isPodcastQuotaOver && selectedSourcesCount === 0
                       ? "border-border/60 bg-muted/20 opacity-40 cursor-not-allowed select-none"
                       : "border-border bg-card hover:bg-muted/40 hover:border-zinc-400 dark:hover:border-zinc-600 active:scale-[0.99] cursor-pointer"
                   )}
@@ -278,11 +305,7 @@ export function StudioPanel({
                     <div className="w-7 h-7 rounded-lg bg-muted border border-border flex items-center justify-center group-hover:bg-muted/80 transition-colors">
                       {tool.renderIcon(hoveredTool === tool.type)}
                     </div>
-                    {tool.type === "PODCAST" && (
-                      <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-sm bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 flex items-center gap-0.5">
-                        <Crown className="w-2.5 h-2.5" /> PRO
-                      </span>
-                    )}
+                    {tool.type === "PODCAST" && renderPodcastBadge()}
                   </div>
                   <div>
                     <span className="text-xs font-medium text-foreground block truncate">

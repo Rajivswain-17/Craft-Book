@@ -28,6 +28,7 @@ model User {
   plan                  PlanType        @default(FREE)
   planExpiresAt         DateTime?
   totalArtifactsCreated Int             @default(0)
+  totalPodcastsCreated  Int             @default(0)
   createdAt             DateTime        @default(now())
   updatedAt             DateTime        @updatedAt
   sessions              Session[]

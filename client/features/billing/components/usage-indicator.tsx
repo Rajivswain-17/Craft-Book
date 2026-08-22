@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Zap, Layers, FileText, MessageSquare, Compass, Crown } from "lucide-react";
+import { Zap, Layers, FileText, MessageSquare, Compass, Crown, AudioLines } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useUsage } from "../hooks/use-usage";
@@ -150,6 +150,36 @@ export function UsageIndicator({
                   (usage.artifacts.count / (usage.artifacts.limit || 3)) * 100,
                   100
                 )}%`,
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Audio Podcasts */}
+        <div>
+          <div className="flex justify-between text-muted-foreground mb-1">
+            <span className="flex items-center gap-1.5">
+              <AudioLines className="w-3.5 h-3.5 text-foreground" /> Podcasts
+            </span>
+            <span className="font-mono text-[11px]">
+              {usage.podcasts.limit === null
+                ? `${usage.podcasts.count} (Unlimited)`
+                : `${usage.podcasts.count} / ${usage.podcasts.limit}`}
+            </span>
+          </div>
+          <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all ${
+                usage.podcasts.exceeded ? "bg-destructive" : "bg-primary"
+              }`}
+              style={{
+                width:
+                  usage.podcasts.limit === null
+                    ? "100%"
+                    : `${Math.min(
+                        (usage.podcasts.count / (usage.podcasts.limit || 2)) * 100,
+                        100
+                      )}%`,
               }}
             />
           </div>

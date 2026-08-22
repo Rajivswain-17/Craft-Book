@@ -14,6 +14,7 @@ export interface UserUsage {
   workspaces: UsageMetric;
   sources: UsageMetric;
   artifacts: UsageMetric;
+  podcasts: UsageMetric;
   messages: UsageMetric;
 }
 

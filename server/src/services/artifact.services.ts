@@ -19,6 +19,7 @@ import {
     assertCanCreateArtifact,
     assertCanCreateArtifactType,
     incrementArtifactCount,
+    incrementPodcastCount,
 } from "./usage.services.js";
 
 import { generateArtifactTitleWithGemini } from "../lib/gemini.js";
@@ -112,8 +113,11 @@ export async function createArtifactForWorkspace(
     });
 
 
-    // Increment lifetime artifact counter (deletions won't restore quota)
+    // Increment lifetime counters (deletions won't restore quota)
     await incrementArtifactCount(userId);
+    if (input.type === "PODCAST") {
+        await incrementPodcastCount(userId);
+    }
 
     await enqueueArtifactGeneration({
         artifactId: artifact.id,

@@ -4,7 +4,9 @@ import {
     countUserWorkspaces,
     findUserPlanDetails,
     findUserTotalArtifacts,
+    findUserTotalPodcasts,
     incrementUserArtifactCount as incrementUserArtifactCountRepo,
+    incrementUserPodcastCount as incrementUserPodcastCountRepo,
 } from "../repository/user.repository.js";
 import { ForbiddenError } from "../types/app-error.js";
 import type { PlanType } from "../generated/prisma/client.js";
@@ -16,30 +18,39 @@ export const PLAN_LIMITS: Record<
         MESSAGES: number | null;
         SOURCES: number;
         ARTIFACTS: number;
+        PODCASTS: number | null;
     }
 > = {
     FREE: {
-        WORKSPACES: 1,
+        WORKSPACES: 3,
         MESSAGES: 10,
         SOURCES: 3,
         ARTIFACTS: 3,
+        PODCASTS: 2, // Lifetime audio podcast generations for free users
     },
     PRO: {
         WORKSPACES: 3,
         MESSAGES: null, // Unlimited chats
         SOURCES: 15,
         ARTIFACTS: 10,
+        PODCASTS: null, // Unlimited podcasts
     },
     PRO_PLUS: {
         WORKSPACES: 10,
         MESSAGES: null, // Unlimited chats
         SOURCES: 30,
         ARTIFACTS: 25,
+        PODCASTS: null, // Unlimited podcasts
     },
 };
 
 export interface LimitDetails {
-    limitType: "workspaces" | "artifacts" | "sources" | "messages";
+    limitType:
+        | "workspaces"
+        | "artifacts"
+        | "sources"
+        | "messages"
+        | "podcasts";
     current: number;
     max: number | null;
     plan: PlanType;
@@ -68,15 +79,17 @@ export async function getUserUsage(userId: string) {
     const { plan, isPro, isProPlus, planExpiresAt, limits } =
         await getUserPlan(userId);
 
-    const [workspaceCount, sourceCount, userArtifacts, messageCount] =
+    const [workspaceCount, sourceCount, userArtifacts, userPodcasts, messageCount] =
         await Promise.all([
             countUserWorkspaces(userId),
             countUserSources(userId),
             findUserTotalArtifacts(userId),
+            findUserTotalPodcasts(userId),
             countUserMessages(userId),
         ]);
 
     const totalArtifactsCreated = userArtifacts?.totalArtifactsCreated ?? 0;
+    const totalPodcastsCreated = userPodcasts?.totalPodcastsCreated ?? 0;
 
     return {
         plan,
@@ -97,6 +110,13 @@ export async function getUserUsage(userId: string) {
             count: totalArtifactsCreated,
             limit: limits.ARTIFACTS,
             exceeded: totalArtifactsCreated >= limits.ARTIFACTS,
+        },
+        podcasts: {
+            count: totalPodcastsCreated,
+            limit: limits.PODCASTS,
+            exceeded:
+                limits.PODCASTS !== null &&
+                totalPodcastsCreated >= limits.PODCASTS,
         },
         messages: {
             count: messageCount,
@@ -170,16 +190,27 @@ export async function assertCanCreateArtifactType(
     userId: string,
     artifactType: string,
 ): Promise<void> {
-    const { plan, isPro } = await getUserPlan(userId);
+    const { plan, limits } = await getUserPlan(userId);
 
-    if (artifactType === "PODCAST" && !isPro) {
+    if (artifactType !== "PODCAST") {
+        return;
+    }
+
+    if (limits.PODCASTS === null) {
+        return; // Unlimited podcasts on paid plans
+    }
+
+    const user = await findUserTotalPodcasts(userId);
+    const totalCreated = user?.totalPodcastsCreated ?? 0;
+
+    if (totalCreated >= limits.PODCASTS) {
         throw new ForbiddenError(
-            "Audio Debate Podcast is an exclusive feature for Pro and Pro+ members. Upgrade to Pro to generate AI voice podcasts.",
+            `${plan} plan limit reached: You have already generated ${totalCreated} of ${limits.PODCASTS} allowed Audio Debate Podcasts on the ${plan} plan. Deleting podcasts does not restore your quota. Upgrade to ${plan === "FREE" ? "Pro" : "Pro+"} for unlimited podcasts.`,
             {
-                code: "PRO_FEATURE_REQUIRED",
-                limitType: "artifacts",
-                current: 0,
-                max: 0,
+                code: "LIMIT_REACHED",
+                limitType: "podcasts",
+                current: totalCreated,
+                max: limits.PODCASTS,
                 plan,
             } satisfies LimitDetails & { code: string },
         );
@@ -188,6 +219,10 @@ export async function assertCanCreateArtifactType(
 
 export async function incrementArtifactCount(userId: string): Promise<void> {
     await incrementUserArtifactCountRepo(userId);
+}
+
+export async function incrementPodcastCount(userId: string): Promise<void> {
+    await incrementUserPodcastCountRepo(userId);
 }
 
 export async function assertCanSendMessage(userId: string): Promise<void> {

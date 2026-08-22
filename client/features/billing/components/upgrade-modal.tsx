@@ -50,10 +50,11 @@ const PLANS: PlanConfig[] = [
     period: "/forever",
     description: "Get started with fundamental AI research & synthesis.",
     features: [
-      { text: "1 Workspace" },
+      { text: "3 Workspaces" },
       { text: "10 Chat Messages" },
       { text: "3 Sources Upload" },
       { text: "3 Learning Artifacts" },
+      { text: "2 Audio Debate Podcasts" },
     ],
   },
   {
@@ -68,6 +69,7 @@ const PLANS: PlanConfig[] = [
       { text: "Unlimited Chats", highlight: true },
       { text: "15 Sources Upload", highlight: true },
       { text: "10 Learning Artifacts", highlight: true },
+      { text: "Unlimited Audio Podcasts", highlight: true },
     ],
   },
   {
@@ -81,6 +83,7 @@ const PLANS: PlanConfig[] = [
       { text: "Unlimited Chats", highlight: true },
       { text: "30 Sources Upload", highlight: true },
       { text: "25 Learning Artifacts", highlight: true },
+      { text: "Unlimited Audio Podcasts", highlight: true },
     ],
   },
 ];

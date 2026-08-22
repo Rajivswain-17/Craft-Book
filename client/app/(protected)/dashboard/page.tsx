@@ -71,7 +71,7 @@ export default function DashboardPage() {
   }, [session, isAuthPending, router]);
 
   const handleOpenCreateModal = () => {
-    const wsLimit = usage?.workspaces.limit ?? (plan === "FREE" ? 1 : plan === "PRO" ? 3 : 10);
+    const wsLimit = usage?.workspaces.limit ?? (plan === "FREE" ? 3 : plan === "PRO" ? 3 : 10);
     if (workspaces.length >= wsLimit) {
       const nextPlan = plan === "FREE" ? "Pro (3 workspaces)" : "Pro+ (10 workspaces)";
       openUpgradeModal({

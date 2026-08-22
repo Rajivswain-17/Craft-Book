@@ -5,10 +5,10 @@ import { create } from "zustand";
 interface UpgradeModalStore {
   isOpen: boolean;
   reason?: string;
-  limitType?: "workspaces" | "artifacts" | "sources" | "messages" | "general";
+  limitType?: "workspaces" | "artifacts" | "sources" | "messages" | "podcasts" | "general";
   openUpgradeModal: (options?: {
     reason?: string;
-    limitType?: "workspaces" | "artifacts" | "sources" | "messages" | "general";
+    limitType?: "workspaces" | "artifacts" | "sources" | "messages" | "podcasts" | "general";
   }) => void;
   closeUpgradeModal: () => void;
 }
