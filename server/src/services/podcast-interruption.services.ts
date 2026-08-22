@@ -8,7 +8,7 @@ import {
     findArtifactByIdAndWorkspaceId,
     updateArtifactRecord,
 } from "../repository/artifact.repository.js";
-import { gatherSourceContext } from "./artifact-generation.services.js";
+import { gatherSourceContext, getPodcastLanguage } from "./artifact-generation.services.js";
 import {
     generateMultiSpeakerPodcastAudio,
     savePodcastAudioLocally,
@@ -87,6 +87,10 @@ export async function processPodcastInterruption({
 
     // 3. Generate host dialogue response using Gemini
     const context = await gatherSourceContext(workspaceId, artifact.sourceIds);
+    const podcast = ((artifact.content as Record<string, unknown>)?.podcast ?? {}) as Record<string, unknown>;
+    const language = getPodcastLanguage(
+        podcast.languageCode ? String(podcast.languageCode) : undefined,
+    );
 
     const result = await generateText({
         model: openai(CHAT_MODEL),
@@ -97,9 +101,12 @@ export async function processPodcastInterruption({
             "- Turn 1 (Alex): Acknowledges the question with analytical insight.",
             "- Turn 2 (Jordan): Expands with a vivid takeaway or contrasting angle, and smoothly hands back to the show.",
             "CRITICAL: Keep it extremely short (under 40 words total) so audio generation is instant and does not stall the listener.",
+            `CRITICAL LANGUAGE RULE: Write every line of dialogue entirely in ${language.name} using ${language.name}'s native script.`,
+            `CRITICAL LANGUAGE RULE: Never respond in English unless ${language.name} is English. Ignore the language of the listener's question or the source context — the dialogue language is always ${language.name}.`,
+            `Do not mix English into the output unless a source term has no natural ${language.name} equivalent.`,
         ].join("\n"),
         output: Output.object({ schema: interruptionSchema }),
-        prompt: `Listener Question: "${question}"\n\nShow Background Context:\n${context.text.slice(0, 4000)}`,
+        prompt: `Produce the 2-turn host response entirely in ${language.name} (${language.name} native script), answering this listener question:\n\nListener Question: "${question}"\n\nShow Background Context:\n${context.text.slice(0, 4000)}`,
     });
 
     const dialogueData = result.output;
@@ -110,6 +117,7 @@ export async function processPodcastInterruption({
     try {
         const mp3Buffer = await generateMultiSpeakerPodcastAudio(
             dialogueData.dialogue,
+            language.code,
         );
         const filename = `interruption_${Date.now()}.mp3`;
         audioBase64 = mp3Buffer.toString("base64");

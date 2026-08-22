@@ -14,6 +14,29 @@ import { uploadAudioToCloudinary } from "../lib/cloudinary.js";
 
 const MAX_CONTEXT_CHARS = 120_000;
 
+const PODCAST_LANGUAGES = {
+    ENGLISH: { name: "English", code: "en" },
+    HINDI: { name: "Hindi", code: "hi" },
+    ODIA: { name: "Odia", code: "or" },
+    MARATHI: { name: "Marathi", code: "mr" },
+    SANSKRIT: { name: "Sanskrit", code: "sa" },
+    BENGALI: { name: "Bengali", code: "bn" },
+    TAMIL: { name: "Tamil", code: "ta" },
+} as const;
+
+export type PodcastLanguage = keyof typeof PODCAST_LANGUAGES;
+
+export function getPodcastLanguage(language?: string) {
+    if (language && language in PODCAST_LANGUAGES) {
+        return PODCAST_LANGUAGES[language as PodcastLanguage];
+    }
+
+    return (
+        Object.values(PODCAST_LANGUAGES).find((item) => item.code === language) ??
+        PODCAST_LANGUAGES.ENGLISH
+    );
+}
+
 const flashcardsSchema = z.object({
     cards: z
         .array(
@@ -155,6 +178,7 @@ export async function gatherSourceContext(
 export async function generateArtifactContent(
     type: ArtifactRecord["type"],
     sourceText: string,
+    podcastLanguage?: string,
 ) {
     const system = [
         `You are Chaibook, an expert learning assistant generating a ${type.toLowerCase()} from workspace source materials.`,
@@ -223,6 +247,7 @@ Source material:\n\n${sourceText}`,
             return result.output;
         }
         case "PODCAST": {
+            const language = getPodcastLanguage(podcastLanguage);
             const result = await generateText({
                 model: openai(CHAT_MODEL),
                 system: [
@@ -232,10 +257,11 @@ Source material:\n\n${sourceText}`,
                     "- Jordan: Big-picture, energetic, challenges assumptions, offers contrasting perspectives and real-world analogies.",
                     "The conversation should be conversational, engaging, and genuinely debate key ideas, trade-offs, and insights from the provided sources.",
                     "Use spoken, audio-friendly language (no markdown syntax, no bullet points, no URLs, no citations like [1]).",
+                    `CRITICAL: Write the topic, summary, and every line of dialogue entirely in ${language.name}. Use ${language.name}'s native script. Do not mix English into the output unless a source term has no natural ${language.name} equivalent.`,
                     "CRITICAL: Keep the debate strictly to 5-6 short, punchy turns (~20-25 words each, total ~130 words) so it fits into a 1-minute audio show.",
                 ].join("\n"),
                 output: Output.object({ schema: podcastDebateSchema }),
-                prompt: `Produce a 5-6 turn, 1-minute audio debate analyzing the following source materials:\n\n${sourceText}`,
+                prompt: `Produce a 5-6 turn, 1-minute ${language.name} audio debate analyzing the following source materials:\n\n${sourceText}`,
             });
 
             const debateData = result.output;
@@ -247,6 +273,7 @@ Source material:\n\n${sourceText}`,
             try {
                 const mp3Buffer = await generateMultiSpeakerPodcastAudio(
                     debateData.turns,
+                    language.code,
                 );
                 const filename = `podcast_${Date.now()}.mp3`;
                 audioBase64 = mp3Buffer.toString("base64");
@@ -282,6 +309,8 @@ Source material:\n\n${sourceText}`,
                     topic: debateData.topic,
                     summary: debateData.summary,
                     durationEstimate: "1 min",
+                    language: language.name,
+                    languageCode: language.code,
                     audioUrl,
                     audioBase64: audioBase64 || undefined,
                     audioError,

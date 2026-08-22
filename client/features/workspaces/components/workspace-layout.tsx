@@ -229,9 +229,10 @@ export function WorkspaceLayout({ workspaceId }: WorkspaceLayoutProps) {
           >
             <StudioPanel
               artifacts={artifacts}
-              onCreateArtifact={(type) =>
+              onCreateArtifact={(type, podcastLanguage) =>
                 createArtifact({
                   type,
+                  podcastLanguage,
                   sourceIds: selectedSourceIds,
                 })
               }
@@ -286,9 +287,10 @@ export function WorkspaceLayout({ workspaceId }: WorkspaceLayoutProps) {
           {mobileTab === "studio" && (
             <StudioPanel
               artifacts={artifacts}
-              onCreateArtifact={(type) =>
+              onCreateArtifact={(type, podcastLanguage) =>
                 createArtifact({
                   type,
+                  podcastLanguage,
                   sourceIds: selectedSourceIds,
                 })
               }

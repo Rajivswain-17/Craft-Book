@@ -13,16 +13,21 @@ interface UpgradeModalStore {
   closeUpgradeModal: () => void;
 }
 
+// TESTING ONLY: Set to true to restore upgrade dialogs throughout the frontend.
+const SUBSCRIPTION_LIMITS_ENABLED = false;
+
 export const useUpgradeModal = create<UpgradeModalStore>((set) => ({
   isOpen: false,
   reason: undefined,
   limitType: "general",
-  openUpgradeModal: (options) =>
+  openUpgradeModal: (options) => {
+    if (!SUBSCRIPTION_LIMITS_ENABLED) return;
     set({
       isOpen: true,
       reason: options?.reason,
       limitType: options?.limitType || "general",
-    }),
+    });
+  },
   closeUpgradeModal: () =>
     set({
       isOpen: false,

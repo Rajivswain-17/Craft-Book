@@ -26,10 +26,12 @@ export function ChatInput({
 }: ChatInputProps) {
   const [input, setInput] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const { usage, isPro } = useUsage();
+  const { usage } = useUsage();
   const { openUpgradeModal } = useUpgradeModal();
 
-  const isLimitReached = !isPro && Boolean(usage?.messages.exceeded);
+  // TESTING ONLY: Restore the original expression to re-enable the chat quota UI.
+  const isLimitReached = false;
+  // const isLimitReached = !isPro && Boolean(usage?.messages.exceeded);
   const messageCount = usage?.messages.count ?? 0;
   const messageLimit = usage?.messages.limit ?? 10;
 
@@ -148,7 +150,8 @@ export function ChatInput({
             </button>
 
             {/* Free tier message counter indicator */}
-            {!isPro && (
+            {/* TESTING ONLY: Hide the free-tier usage counter while limits are disabled. */}
+            {false && (
               <button
                 type="button"
                 onClick={() =>

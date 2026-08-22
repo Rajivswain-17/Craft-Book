@@ -13,6 +13,9 @@ import {
 import { ForbiddenError } from "../types/app-error.js";
 import type { PlanType } from "../generated/prisma/client.js";
 
+// TESTING ONLY: Set to true to restore every subscription limit below.
+const SUBSCRIPTION_LIMITS_ENABLED = false;
+
 export const PLAN_LIMITS: Record<
     PlanType,
     {
@@ -143,6 +146,7 @@ export async function getUserUsage(userId: string) {
 }
 
 export async function assertCanCreateWorkspace(userId: string): Promise<void> {
+    if (!SUBSCRIPTION_LIMITS_ENABLED) return;
     const { plan, limits } = await getUserPlan(userId);
 
     const count = await countUserWorkspaces(userId);
@@ -162,6 +166,7 @@ export async function assertCanCreateWorkspace(userId: string): Promise<void> {
 }
 
 export async function assertCanCreateSource(userId: string): Promise<void> {
+    if (!SUBSCRIPTION_LIMITS_ENABLED) return;
     const { plan, limits } = await getUserPlan(userId);
 
     const count = await countUserSources(userId);
@@ -181,6 +186,7 @@ export async function assertCanCreateSource(userId: string): Promise<void> {
 }
 
 export async function assertCanCreateArtifact(userId: string): Promise<void> {
+    if (!SUBSCRIPTION_LIMITS_ENABLED) return;
     const { plan, limits } = await getUserPlan(userId);
 
     const user = await findUserTotalArtifacts(userId);
@@ -205,6 +211,7 @@ export async function assertCanCreateArtifactType(
     userId: string,
     artifactType: string,
 ): Promise<void> {
+    if (!SUBSCRIPTION_LIMITS_ENABLED) return;
     const { plan, limits } = await getUserPlan(userId);
 
     if (artifactType !== "PODCAST") {
@@ -241,6 +248,7 @@ export async function incrementPodcastCount(userId: string): Promise<void> {
 }
 
 export async function assertCanSendMessage(userId: string): Promise<void> {
+    if (!SUBSCRIPTION_LIMITS_ENABLED) return;
     const { plan, limits } = await getUserPlan(userId);
 
     if (limits.MESSAGES === null) {
@@ -264,6 +272,7 @@ export async function assertCanSendMessage(userId: string): Promise<void> {
 
 /** Consumes one free Interrupt & Ask use. Paid plans remain unlimited. */
 export async function assertCanUsePodcastInterruption(userId: string): Promise<void> {
+    if (!SUBSCRIPTION_LIMITS_ENABLED) return;
     const { plan, limits } = await getUserPlan(userId);
     const limit = limits.INTERRUPTIONS;
 

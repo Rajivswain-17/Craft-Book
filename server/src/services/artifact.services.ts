@@ -110,6 +110,10 @@ export async function createArtifactForWorkspace(
         title,
         sourceIds: context.sourceIds,
         status: "PENDING",
+        metadata:
+            input.type === "PODCAST"
+                ? { podcastLanguage: input.podcastLanguage ?? "ENGLISH" }
+                : undefined,
     });
 
 
@@ -179,6 +183,7 @@ export async function processArtifactById(artifactId: string) {
         const content = await generateArtifactContent(
             artifact.type,
             context.text,
+            (artifact.metadata as Record<string, unknown> | null)?.podcastLanguage as string | undefined,
         );
 
         // If title was a generic date fallback, refine it with specific topic/Gemini

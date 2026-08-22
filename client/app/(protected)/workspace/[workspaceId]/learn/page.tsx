@@ -20,6 +20,7 @@ export default function WorkspaceLearnPage({
     useArtifacts(workspaceId);
   const sourcesQuery = useSources(workspaceId);
   const sources = sourcesQuery.data || [];
+  const sourceIds = sources.map((source) => source.id);
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
@@ -39,7 +40,9 @@ export default function WorkspaceLearnPage({
       <div className="flex-1 max-w-5xl mx-auto w-full p-6 md:p-8">
         <StudioPanel
           artifacts={artifacts}
-          onCreateArtifact={(type) => createArtifact({ type })}
+          onCreateArtifact={(type, podcastLanguage) =>
+            createArtifact({ type, podcastLanguage, sourceIds })
+          }
           onDeleteArtifact={deleteArtifact}
           isCreating={isCreating}
           selectedSourcesCount={sources.length}

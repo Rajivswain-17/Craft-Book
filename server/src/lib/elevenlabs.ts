@@ -19,6 +19,7 @@ export interface SpeechTurn {
 export async function synthesizeElevenLabsSpeech(
     text: string,
     voiceId: string,
+    languageCode?: string,
 ): Promise<Buffer> {
     const apiKey = process.env.ELEVENLABS_API_KEY;
     if (!apiKey) {
@@ -39,7 +40,9 @@ export async function synthesizeElevenLabsSpeech(
             },
             body: JSON.stringify({
                 text,
-                model_id: "eleven_turbo_v2_5",
+                // Eleven v3 supports the broadest set of languages for podcasts.
+                model_id: "eleven_v3",
+                ...(languageCode ? { language_code: languageCode } : {}),
                 voice_settings: {
                     stability: 0.5,
                     similarity_boost: 0.75,
@@ -68,6 +71,7 @@ export async function synthesizeElevenLabsSpeech(
  */
 export async function generateMultiSpeakerPodcastAudio(
     turns: SpeechTurn[],
+    languageCode?: string,
 ): Promise<Buffer> {
     const audioBuffers: Buffer[] = [];
 
@@ -78,7 +82,7 @@ export async function generateMultiSpeakerPodcastAudio(
                 : ELEVENLABS_VOICES.JORDAN;
 
         try {
-            const buffer = await synthesizeElevenLabsSpeech(turn.text, voiceId);
+            const buffer = await synthesizeElevenLabsSpeech(turn.text, voiceId, languageCode);
             audioBuffers.push(buffer);
         } catch (error) {
             console.error(`Failed to synthesize turn for ${turn.speaker}:`, error);

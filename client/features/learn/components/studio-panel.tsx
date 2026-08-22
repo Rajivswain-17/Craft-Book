@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { LearningArtifact, ArtifactType } from "../types";
+import { LearningArtifact, ArtifactType, PodcastLanguage } from "../types";
 import { ArtifactModal } from "./artifact-modal";
 import {
   Trash2,
@@ -27,7 +27,7 @@ import { cn, formatDate } from "@/lib/utils";
 
 interface StudioPanelProps {
   artifacts: LearningArtifact[];
-  onCreateArtifact: (type: ArtifactType) => Promise<unknown>;
+  onCreateArtifact: (type: ArtifactType, podcastLanguage?: PodcastLanguage) => Promise<unknown>;
   onDeleteArtifact: (id: string) => Promise<unknown>;
   isCreating: boolean;
   selectedSourcesCount: number;
@@ -114,6 +114,16 @@ const STUDIO_TOOLS: {
   },
 ];
 
+const PODCAST_LANGUAGE_OPTIONS: { value: PodcastLanguage; label: string }[] = [
+  { value: "ENGLISH", label: "English" },
+  { value: "HINDI", label: "Hindi" },
+  { value: "ODIA", label: "Odia" },
+  { value: "MARATHI", label: "Marathi" },
+  { value: "SANSKRIT", label: "Sanskrit" },
+  { value: "BENGALI", label: "Bengali" },
+  { value: "TAMIL", label: "Tamil" },
+];
+
 export function StudioPanel({
   artifacts,
   onCreateArtifact,
@@ -121,13 +131,16 @@ export function StudioPanel({
   isCreating,
   selectedSourcesCount,
 }: StudioPanelProps) {
-  const { isPro, usage } = useUsage();
+  const { usage } = useUsage();
   const [selectedArtifact, setSelectedArtifact] = useState<LearningArtifact | null>(null);
   const [generatingType, setGeneratingType] = useState<ArtifactType | null>(null);
   const [hoveredTool, setHoveredTool] = useState<ArtifactType | null>(null);
+  const [podcastLanguage, setPodcastLanguage] = useState<PodcastLanguage>("ENGLISH");
 
   // Free users get a limited number of lifetime podcast generations
-  const podcastLimitReached = !isPro && Boolean(usage?.podcasts.exceeded);
+  // TESTING ONLY: Restore the original expression to re-enable the podcast quota UI.
+  const podcastLimitReached = false;
+  // const podcastLimitReached = !isPro && Boolean(usage?.podcasts.exceeded);
 
   const renderPodcastBadge = () => {
     if (!usage || usage.podcasts.limit === null) {
@@ -170,7 +183,10 @@ export function StudioPanel({
     if (isCreating || selectedSourcesCount === 0) return;
     setGeneratingType(type);
     try {
-      await onCreateArtifact(type);
+      await onCreateArtifact(
+        type,
+        type === "PODCAST" ? podcastLanguage : undefined,
+      );
     } catch (err) {
       console.error("Failed to create artifact:", err);
     } finally {
@@ -318,6 +334,28 @@ export function StudioPanel({
                 </button>
               );
             })}
+          </div>
+
+          <div className="rounded-xl border border-border bg-muted/20 p-3 space-y-1.5">
+            <label htmlFor="podcast-language" className="text-[11px] font-medium text-foreground">
+              Podcast language
+            </label>
+            <select
+              id="podcast-language"
+              value={podcastLanguage}
+              onChange={(event) => setPodcastLanguage(event.target.value as PodcastLanguage)}
+              disabled={isCreating}
+              className="w-full rounded-lg border border-border bg-background px-2.5 py-2 text-xs text-foreground outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
+            >
+              {PODCAST_LANGUAGE_OPTIONS.map((language) => (
+                <option key={language.value} value={language.value}>
+                  {language.label}
+                </option>
+              ))}
+            </select>
+            <p className="text-[10px] text-muted-foreground">
+              Generates the podcast transcript and host audio in this language.
+            </p>
           </div>
         </div>
 

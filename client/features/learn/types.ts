@@ -7,6 +7,15 @@ export type ArtifactType =
   | "REPORT"
   | "PODCAST";
 
+export type PodcastLanguage =
+  | "ENGLISH"
+  | "HINDI"
+  | "ODIA"
+  | "MARATHI"
+  | "SANSKRIT"
+  | "BENGALI"
+  | "TAMIL";
+
 export type ArtifactStatus = "PENDING" | "PROCESSING" | "READY" | "FAILED";
 
 export interface FlashcardItem {
@@ -58,6 +67,8 @@ export interface PodcastContent {
   audioUrl?: string | null;
   audioBase64?: string;
   audioError?: string | null;
+  language?: string;
+  languageCode?: string;
   topic?: string;
   summary?: string;
   durationEstimate?: string;

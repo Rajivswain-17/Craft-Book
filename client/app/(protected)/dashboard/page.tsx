@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/features/auth";
 import { useWorkspaces, Workspace } from "@/hooks/use-workspaces";
 import { ThemeLoader } from "@/components/ui/theme-loader";
-import { useUsage, useUpgradeModal } from "@/features/billing";
+import { useUpgradeModal } from "@/features/billing";
 import {
   DashboardHeader,
   DashboardBanner,
@@ -17,7 +17,6 @@ import {
 export default function DashboardPage() {
   const router = useRouter();
   const { session, isPending: isAuthPending, logoutMutation } = useAuth();
-  const { plan, usage } = useUsage();
   const { openUpgradeModal } = useUpgradeModal();
 
   const {
@@ -71,6 +70,11 @@ export default function DashboardPage() {
   }, [session, isAuthPending, router]);
 
   const handleOpenCreateModal = () => {
+    // TESTING ONLY: Subscription workspace limit is intentionally bypassed.
+    setIsCreateOpen(true);
+    return;
+
+    /*
     const wsLimit = usage?.workspaces.limit ?? (plan === "FREE" ? 3 : plan === "PRO" ? 3 : 10);
     if (workspaces.length >= wsLimit) {
       const nextPlan = plan === "FREE" ? "Pro (3 workspaces)" : "Pro+ (10 workspaces)";
@@ -81,6 +85,7 @@ export default function DashboardPage() {
       return;
     }
     setIsCreateOpen(true);
+    */
   };
 
   const handleCreateWorkspace = async (title: string, description: string, icon: string) => {

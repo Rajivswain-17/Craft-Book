@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
-import { LearningArtifact, ArtifactType } from "../types";
+import { LearningArtifact, ArtifactType, PodcastLanguage } from "../types";
 import { useUpgradeModal } from "@/features/billing";
 
 export function useArtifacts(workspaceId: string) {
@@ -32,16 +32,18 @@ export function useArtifacts(workspaceId: string) {
       type,
       title,
       sourceIds,
+      podcastLanguage,
     }: {
       type: ArtifactType;
       title?: string;
       sourceIds?: string[];
+      podcastLanguage?: PodcastLanguage;
     }) => {
       return await apiClient<LearningArtifact>(
         `/api/workspaces/${workspaceId}/artifacts`,
         {
           method: "POST",
-          body: JSON.stringify({ type, title, sourceIds }),
+          body: JSON.stringify({ type, title, sourceIds, podcastLanguage }),
         }
       );
     },
