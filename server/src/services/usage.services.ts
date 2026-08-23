@@ -14,7 +14,7 @@ import { ForbiddenError } from "../types/app-error.js";
 import type { PlanType } from "../generated/prisma/client.js";
 
 // TESTING ONLY: Set to true to restore every subscription limit below.
-const SUBSCRIPTION_LIMITS_ENABLED = false;
+const SUBSCRIPTION_LIMITS_ENABLED = true;
 
 export const PLAN_LIMITS: Record<
     PlanType,
@@ -32,7 +32,7 @@ export const PLAN_LIMITS: Record<
         MESSAGES: 10,
         SOURCES: 3,
         ARTIFACTS: 3,
-        PODCASTS: 2, // Lifetime audio podcast generations for free users
+        PODCASTS: 3, // Lifetime audio podcast generations for free users
         INTERRUPTIONS: 3, // Lifetime Interrupt & Ask requests for free users
     },
     PRO: {

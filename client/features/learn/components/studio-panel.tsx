@@ -131,16 +131,14 @@ export function StudioPanel({
   isCreating,
   selectedSourcesCount,
 }: StudioPanelProps) {
-  const { usage } = useUsage();
+  const { usage, isPro } = useUsage();
   const [selectedArtifact, setSelectedArtifact] = useState<LearningArtifact | null>(null);
   const [generatingType, setGeneratingType] = useState<ArtifactType | null>(null);
   const [hoveredTool, setHoveredTool] = useState<ArtifactType | null>(null);
   const [podcastLanguage, setPodcastLanguage] = useState<PodcastLanguage>("ENGLISH");
 
   // Free users get a limited number of lifetime podcast generations
-  // TESTING ONLY: Restore the original expression to re-enable the podcast quota UI.
-  const podcastLimitReached = false;
-  // const podcastLimitReached = !isPro && Boolean(usage?.podcasts.exceeded);
+  const podcastLimitReached = !isPro && Boolean(usage?.podcasts.exceeded);
 
   const renderPodcastBadge = () => {
     if (!usage || usage.podcasts.limit === null) {

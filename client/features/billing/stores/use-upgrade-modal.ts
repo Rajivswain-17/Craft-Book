@@ -14,7 +14,7 @@ interface UpgradeModalStore {
 }
 
 // TESTING ONLY: Set to true to restore upgrade dialogs throughout the frontend.
-const SUBSCRIPTION_LIMITS_ENABLED = false;
+const SUBSCRIPTION_LIMITS_ENABLED = true;
 
 export const useUpgradeModal = create<UpgradeModalStore>((set) => ({
   isOpen: false,
