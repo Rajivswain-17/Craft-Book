@@ -8,7 +8,7 @@ import { ValidationError } from "../types/app-error.js";
 import {
     generateMultiSpeakerPodcastAudio,
     savePodcastAudioLocally,
-} from "../lib/elevenlabs.js";
+} from "../lib/sarvam.js";
 import { uploadAudioToCloudinary } from "../lib/cloudinary.js";
 
 
@@ -271,17 +271,17 @@ Source material:\n\n${sourceText}`,
             let audioBase64: string | null = null;
             let audioError: string | null = null;
             try {
-                const mp3Buffer = await generateMultiSpeakerPodcastAudio(
+                const audioBuffer = await generateMultiSpeakerPodcastAudio(
                     debateData.turns,
                     language.code,
                 );
-                const filename = `podcast_${Date.now()}.mp3`;
-                audioBase64 = mp3Buffer.toString("base64");
+                const filename = `podcast_${Date.now()}.wav`;
+                audioBase64 = audioBuffer.toString("base64");
 
                 // 1. Try uploading to Cloudinary
                 try {
                     const uploadResult = await uploadAudioToCloudinary(
-                        mp3Buffer,
+                        audioBuffer,
                         filename,
                     );
                     if (uploadResult?.secureUrl) {
@@ -294,14 +294,14 @@ Source material:\n\n${sourceText}`,
                 // 2. Save locally as secondary fallback
                 if (!audioUrl) {
                     try {
-                        audioUrl = savePodcastAudioLocally(mp3Buffer, filename);
+                        audioUrl = savePodcastAudioLocally(audioBuffer, filename);
                     } catch (localErr) {
                         console.warn("Local audio saving failed:", localErr);
                     }
                 }
             } catch (audioErr) {
                 console.error("Audio synthesis failed:", audioErr);
-                audioError = "Podcast audio could not be generated. Check the ElevenLabs API key, account credits, and server logs, then regenerate this podcast.";
+                audioError = "Podcast audio could not be generated. Check the SARVAM_API_KEY, account credits, and server logs, then regenerate this podcast.";
             }
 
             return {

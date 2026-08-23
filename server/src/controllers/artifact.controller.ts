@@ -110,8 +110,13 @@ export async function streamPodcastAudio(req: Request, res: Response) {
         const audioBuffer = Buffer.from(audioBase64, "base64");
         const totalSize = audioBuffer.length;
         const range = req.headers.range;
+        const contentType =
+            audioBuffer.length > 12 &&
+            audioBuffer.toString("ascii", 0, 4) === "RIFF"
+                ? "audio/wav"
+                : "audio/mpeg";
 
-        res.setHeader("Content-Type", "audio/mpeg");
+        res.setHeader("Content-Type", contentType);
         res.setHeader("Accept-Ranges", "bytes");
 
         if (range) {
@@ -141,7 +146,12 @@ export async function streamPodcastAudio(req: Request, res: Response) {
             const totalSize = stat.size;
             const range = req.headers.range;
 
-            res.setHeader("Content-Type", "audio/mpeg");
+            res.setHeader(
+                "Content-Type",
+                filename.toLowerCase().endsWith(".wav")
+                    ? "audio/wav"
+                    : "audio/mpeg",
+            );
             res.setHeader("Accept-Ranges", "bytes");
 
             if (range) {

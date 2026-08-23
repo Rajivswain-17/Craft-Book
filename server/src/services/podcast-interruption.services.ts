@@ -12,7 +12,7 @@ import { gatherSourceContext, getPodcastLanguage } from "./artifact-generation.s
 import {
     generateMultiSpeakerPodcastAudio,
     savePodcastAudioLocally,
-} from "../lib/elevenlabs.js";
+} from "../lib/sarvam.js";
 import { uploadAudioToCloudinary } from "../lib/cloudinary.js";
 import { NotFoundError, ValidationError } from "../types/app-error.js";
 import { assertCanUsePodcastInterruption } from "./usage.services.js";
@@ -111,20 +111,20 @@ export async function processPodcastInterruption({
 
     const dialogueData = result.output;
 
-    // 4. Generate audio with ElevenLabs
+    // 4. Generate audio with Sarvam AI
     let audioUrl: string | null = null;
     let audioBase64: string | null = null;
     try {
-        const mp3Buffer = await generateMultiSpeakerPodcastAudio(
+        const audioBuffer = await generateMultiSpeakerPodcastAudio(
             dialogueData.dialogue,
             language.code,
         );
-        const filename = `interruption_${Date.now()}.mp3`;
-        audioBase64 = mp3Buffer.toString("base64");
+        const filename = `interruption_${Date.now()}.wav`;
+        audioBase64 = audioBuffer.toString("base64");
 
         // Try uploading to Cloudinary
         try {
-            const cloudResult = await uploadAudioToCloudinary(mp3Buffer, filename);
+            const cloudResult = await uploadAudioToCloudinary(audioBuffer, filename);
             if (cloudResult?.secureUrl) audioUrl = cloudResult.secureUrl;
         } catch (cloudErr) {
             console.warn("Cloudinary upload fallback for interruption:", cloudErr);
@@ -133,7 +133,7 @@ export async function processPodcastInterruption({
         // Local save fallback
         if (!audioUrl) {
             try {
-                audioUrl = savePodcastAudioLocally(mp3Buffer, filename);
+                audioUrl = savePodcastAudioLocally(audioBuffer, filename);
             } catch (e) {
                 console.warn("Local save failed for interruption:", e);
             }

@@ -158,6 +158,11 @@ export async function uploadAudioToCloudinary(
         throw new ValidationError("Cloudinary is not configured on the server");
     }
 
+    // Detect WAV (Sarvam AI output) vs MP3 so the file gets the correct mime type
+    const isWav = buffer.length > 12 && buffer.toString("ascii", 0, 4) === "RIFF";
+    const mimeType = isWav ? "audio/wav" : "audio/mpeg";
+    const audioFormat = isWav ? "wav" : "mp3";
+
     // 1. Try signed upload if API Key and Secret are properly configured
     if (apiKey && apiSecret && apiKey !== apiSecret) {
         try {
@@ -168,14 +173,14 @@ export async function uploadAudioToCloudinary(
                 secure: true,
             });
 
-            const base64Data = `data:audio/mp3;base64,${buffer.toString("base64")}`;
+            const base64Data = `data:${mimeType};base64,${buffer.toString("base64")}`;
             const cleanId = filename.replace(/\.[^/.]+$/, "");
 
             const result = await cloudinary.uploader.upload(base64Data, {
                 resource_type: "video",
                 folder: "chaibook/podcasts",
                 public_id: cleanId,
-                format: "mp3",
+                format: audioFormat,
             });
 
             if (result?.secure_url) {
@@ -199,7 +204,7 @@ export async function uploadAudioToCloudinary(
     const form = new FormData();
     form.append(
         "file",
-        new Blob([new Uint8Array(buffer)], { type: "audio/mpeg" }),
+        new Blob([new Uint8Array(buffer)], { type: mimeType }),
         filename,
     );
     form.append("upload_preset", uploadPreset);
