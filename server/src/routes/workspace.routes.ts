@@ -9,7 +9,7 @@ import {
 import { requireAuth } from "../middleware/require-auth.middleware.js";
 import { asyncHandler } from "../utils/async-handler.js";
 
-export const workspaceRoutes = Router();
+export const workspaceRoutes = Router({ mergeParams: true });
 
 workspaceRoutes.use(requireAuth);
 

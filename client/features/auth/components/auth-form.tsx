@@ -21,12 +21,23 @@ export function AuthForm({ initialMode = "login" }: AuthFormProps) {
   const router = useRouter();
 
   const {
+    session,
     loginMutation,
     signupMutation,
     signInWithGoogle,
     authError,
     setAuthError,
   } = useAuth();
+
+  React.useEffect(() => {
+    if (session?.user) {
+      if (typeof window !== "undefined") {
+        const params = new URLSearchParams(window.location.search);
+        const target = params.get("callbackUrl") || "/dashboard";
+        window.location.href = target;
+      }
+    }
+  }, [session]);
 
   const isLoading = loginMutation.isPending || signupMutation.isPending;
 
