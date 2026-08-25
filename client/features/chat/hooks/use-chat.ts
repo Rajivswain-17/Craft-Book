@@ -130,7 +130,12 @@ export function useChat(workspaceId: string, activeConversationId?: string) {
       abortControllerRef.current = controller;
 
       const API_BASE_URL =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081";
+        typeof window !== "undefined"
+          ? ""
+          : process.env.BACKEND_INTERNAL_URL ||
+            process.env.NEXT_PUBLIC_API_URL ||
+            "http://localhost:8081";
+
 
       try {
         const payloadMessages = [...messages, userMessage].map((m) => ({

@@ -1,5 +1,9 @@
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081";
+  typeof window !== "undefined"
+    ? ""
+    : process.env.BACKEND_INTERNAL_URL ||
+      process.env.NEXT_PUBLIC_API_URL ||
+      "http://localhost:8081";
 
 interface RequestOptions extends RequestInit {
   params?: Record<string, string | number | boolean | undefined>;

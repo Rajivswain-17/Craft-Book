@@ -9,7 +9,11 @@ import type {
 } from "./types";
 
 const API_BASE_URL =
-    process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081";
+    typeof window !== "undefined"
+        ? ""
+        : process.env.BACKEND_INTERNAL_URL ||
+          process.env.NEXT_PUBLIC_API_URL ||
+          "http://localhost:8081";
 
 function buildSourcesPath(workspaceId: string, filters?: SourceFilters) {
     const params = new URLSearchParams();
