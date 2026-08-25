@@ -59,8 +59,12 @@ export function useAuth() {
     },
     onSuccess: (result) => {
       queryClient.invalidateQueries();
-      router.push(result.targetUrl);
-      router.refresh();
+      if (typeof window !== "undefined") {
+        window.location.href = result.targetUrl;
+      } else {
+        router.push(result.targetUrl);
+        router.refresh();
+      }
     },
     onError: (error: Error) => {
       setAuthError(error.message);
@@ -92,8 +96,12 @@ export function useAuth() {
     },
     onSuccess: (result) => {
       queryClient.invalidateQueries();
-      router.push(result.targetUrl);
-      router.refresh();
+      if (typeof window !== "undefined") {
+        window.location.href = result.targetUrl;
+      } else {
+        router.push(result.targetUrl);
+        router.refresh();
+      }
     },
     onError: (error: Error) => {
       setAuthError(error.message);
